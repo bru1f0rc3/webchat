@@ -1,107 +1,44 @@
-let db;
-let messages = [];
-let nickname = '';
+let chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+    let nickname = localStorage.getItem('nickname') || "";
 
-// Инициализация базы данных
-async function initializeDatabase() {
-  // Открываем базу данных
-  db = await new Promise((resolve, reject) => {
-    const request = window.indexedDB.open('chatDB', 1);
+    // Заполняем поле ввода никнейма, если он есть в localStorage
+    document.getElementById('nickname-input').value = nickname;
 
-    request.onupgradeneeded = (event) => {
-      db = event.target.result;
-      if (!db.objectStoreNames.contains('messages')) {
-        db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
+    // Функция отправки сообщения
+    function sendMessage() {
+      const message = document.getElementById('chat-input').value.trim();
+      const nicknameInput = document.getElementById('nickname-input').value.trim();
+
+      if (message !== '' && nicknameInput !== '') {
+        const newMessage = {
+          nickname: nicknameInput,
+          message: message,
+          timestamp: new Date().toLocaleString()
+        };
+        chatMessages.push(newMessage);
+        saveMessages();
+        displayMessages();
+        document.getElementById('chat-input').value = '';
       }
-    };
+    }
 
-    request.onsuccess = (event) => {
-      db = event.target.result;
-      resolve(db);
-    };
+    // Функция отображения сообщений
+    function displayMessages() {
+      const chatContainer = document.getElementById('chat-messages');
+      chatContainer.innerHTML = '';
+      for (const msg of chatMessages) {
+        const messageElement = document.createElement('div');
+        messageElement.textContent = `${msg.timestamp} - ${msg.nickname}: ${msg.message}`;
+        chatContainer.appendChild(messageElement);
+      }
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-    request.onerror = (event) => {
-      reject(event.target.error);
-    };
-  });
+    // Функция сохранения сообщений
+    function saveMessages() {
+      localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
+      localStorage.setItem('nickname', document.getElementById('nickname-input').value);
+    }
 
-  // Загружаем сообщения из базы данных
-  await loadMessagesFromDB();
-}
-
-// Загрузка сообщений из базы данных
-async function loadMessagesFromDB() {
-  const transaction = db.transaction(['messages'], 'readonly');
-  const objectStore = transaction.objectStore('messages');
-  const request = objectStore.getAll();
-
-  return new Promise((resolve, reject) => {
-    request.onsuccess = (event) => {
-      messages = event.target.result;
-      displayMessages();
-      resolve();
-    };
-
-    request.onerror = (event) => {
-      reject(event.target.error);
-    };
-  });
-}
-
-// Сохранение сообщения в базе данных
-async function saveMessageToDB(message) {
-  const transaction = db.transaction(['messages'], 'readwrite');
-  const objectStore = transaction.objectStore('messages');
-  const request = objectStore.add(message);
-
-  return new Promise((resolve, reject) => {
-    request.onsuccess = (event) => {
-      resolve();
-    };
-
-    request.onerror = (event) => {
-      reject(event.target.error);
-    };
-  });
-}
-
-// Отображение сообщений
-function displayMessages() {
-  const chatMessages = document.getElementById('chat-messages');
-  chatMessages.innerHTML = '';
-  messages.forEach(message => {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('chat-message');
-
-    const nicknameElement = document.createElement('div');
-    nicknameElement.classList.add('nickname');
-    nicknameElement.textContent = message.nickname;
-
-    const textElement = document.createElement('div');
-    textElement.classList.add('text');
-    textElement.textContent = message.text;
-
-    messageElement.appendChild(nicknameElement);
-    messageElement.appendChild(textElement);
-    chatMessages.appendChild(messageElement);
-  });
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Отправка сообщения
-async function sendMessage() {
-  const nicknameInput = document.getElementById('nickname-input');
-  const chatInput = document.getElementById('chat-input');
-  const message = {
-    nickname: nicknameInput.value.trim() || 'Anonymous',
-    text: chatInput.value.trim()
-  };
-  if (message.text) {
-    await saveMessageToDB(message);
-    messages.push(message);
-    chatInput.value = '';
+    // Вызываем функцию отображения сообщений при загрузке страницы
     displayMessages();
-  }
-}
-
-initializeDatabase();
