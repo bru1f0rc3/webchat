@@ -1,44 +1,52 @@
-let chatMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
-let nickname = localStorage.getItem('nickname') || "";
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, child, push, onValue } from "firebase/database";
 
-// Заполняем поле ввода никнейма, если он есть в localStorage
-document.getElementById('nickname-input').value = nickname;
+/// Replace the configuration with your own Firebase project details
+const firebaseConfig = {
+  apiKey: "AIzaSyBshSfkcAi6nx6BV3yg9cFGev7ioF_fV9M",
+  authDomain: "webchatting-99923.firebaseapp.com",
+  projectId: "webchatting-99923",
+  storageBucket: "webchatting-99923.appspot.com",
+  messagingSenderId: "521514629601",
+  appId: "1:521514629601:web:d460da0fa862c316ffbaa0"
+};
 
-// Функция отображения сообщений
-function displayMessages() {
-  const chatContainer = document.getElementById('chat-messages');
-  chatContainer.innerHTML = '';
-  chatMessages.forEach(msg => {
-    const messageElement = document.createElement('div');
-    messageElement.textContent = `${msg.timestamp} - ${msg.nickname}: ${msg.message}`;
-    chatContainer.appendChild(messageElement);
-  });
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-}
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+const chatRef = database.ref('chat');
 
-// Функция отправки сообщения
-function sendMessage() {
+// Function to send a new chat message
+export function sendMessage() {
   const message = document.getElementById('chat-input').value.trim();
-  const nicknameInput = document.getElementById('nickname-input').value.trim();
+  const nickname = document.getElementById('nickname-input').value.trim();
 
-  if (message !== '' && nicknameInput !== '') {
+  if (message !== '' && nickname !== '') {
     const newMessage = {
-      nickname: nicknameInput,
+      nickname: nickname,
       message: message,
       timestamp: new Date().toLocaleString()
     };
-    chatMessages.push(newMessage);
-    saveMessages();
+
+    // Add the new message to the Realtime Database
+    chatRef.child('messages').push(newMessage);
     document.getElementById('chat-input').value = '';
-    displayMessages(); // Переместили вызов displayMessages() сюда
   }
 }
 
-// Функция сохранения сообщений
-function saveMessages() {
-  localStorage.setItem('chatMessages', JSON.stringify(chatMessages));
-  localStorage.setItem('nickname', document.getElementById('nickname-input').value);
-}
+// Listen for new chat messages
+chatRef.child('messages').on('value', (snapshot) => {
+  const messages = snapshot.val();
+  if (messages) {
+    Object.values(messages).forEach((message) => {
+      displayMessage(message.nickname, message.message, message.timestamp);
+    });
+  }
+});
 
-// Вызываем функцию отображения сообщений при загрузке страницы
-displayMessages();
+// Function to display a new chat message
+function displayMessage(nickname, message, timestamp) {
+  const messageElement = document.createElement('div');
+  messageElement.textContent = `${timestamp} - ${nickname}: ${message}`;
+  document.getElementById('chat-messages').appendChild(messageElement);
+}

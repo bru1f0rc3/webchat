@@ -2,7 +2,10 @@
 <html>
     <head>
         <link rel="stylesheet" href="style/style.css">
-        <script src="scr/app.js"></script>
+        <!-- Add the Firebase SDK -->
+        <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+        <script type="module" src="app.js"></script>
     </head>
     <body>
         <div class="chat-container">
@@ -12,9 +15,6 @@
               <input type="text" id="chat-input" placeholder="Введите сообщение..." />
               <button onclick="sendMessage()">Отправить</button>
             </div>
-          </div>
+        </div>
     </body>
-    <script>
-                displayMessages();
-    </script>
 </html>
