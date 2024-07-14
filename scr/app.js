@@ -1,6 +1,6 @@
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, child, push, onValue } from "firebase/database";
-
+import firebase from '/firebase/app';
+import '/firebase/auth';
+import '/firebase/firestore';
 /// Replace the configuration with your own Firebase project details
 const firebaseConfig = {
   apiKey: "AIzaSyBshSfkcAi6nx6BV3yg9cFGev7ioF_fV9M",
@@ -17,7 +17,7 @@ const database = firebase.database();
 const chatRef = database.ref('chat');
 
 // Function to send a new chat message
-export function sendMessage() {
+function sendMessage() {
   const message = document.getElementById('chat-input').value.trim();
   const nickname = document.getElementById('nickname-input').value.trim();
 
@@ -33,6 +33,8 @@ export function sendMessage() {
     document.getElementById('chat-input').value = '';
   }
 }
+
+window.sendMessage = sendMessage;
 
 // Listen for new chat messages
 chatRef.child('messages').on('value', (snapshot) => {
